@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <title>React Socket.IO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+  </head>
+  <body>
+    <h1>Gallery</h1>
+    <ul id="photos"></ul>
+  </body>
+  <script>
+    var socket = io();
+    socket.on('message name', function(msg){
+      $('#photos').append($('<li>').text(msg));
+    });
+  </script>
+</html>
