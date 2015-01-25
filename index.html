@@ -4,15 +4,46 @@
     <title>React Socket.IO</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="http://fb.me/react-0.12.2.js"></script>
+    <script src="http://fb.me/JSXTransformer-0.12.2.js"></script>
   </head>
   <body>
     <h1>Gallery</h1>
+    <div id="example"></div>
     <ul id="photos"></ul>
   </body>
-  <script>
+  <script type="text/jsx">
+    var GalleryList = React.createClass({
+      render: function() {
+        var createItem = function(imgUrl) {
+          return <li><img height="50px" width="50px" src={imgUrl}/></li>;
+        };
+        // Warning: Each child in an array should have a unique "key" prop.
+        return <ul>{this.props.photos.map(createItem)}</ul>;
+      }
+    });
+    var GalleryPhotos = React.createClass({
+      getInitialState: function() {
+        return {photos: []};
+      },
+      addPhoto: function(photo) {
+        var nextPhotos = this.state.photos.concat([photo]);
+        this.setState({photos: nextPhotos});
+      },
+      render: function() {
+        return (
+          <div>
+            <GalleryList photos={this.state.photos} />
+          </div>
+        );
+      }
+    });
+    galleryPhotos = React.render(<GalleryPhotos />, $('#example')[0]);
+
     var socket = io();
     socket.on('message name', function(msg){
-      $('#photos').append($('<li>').text(msg));
+      galleryPhotos.addPhoto('http://i.ytimg.com/vi/bZemQdvthBs/maxresdefault.jpg');
     });
+
   </script>
 </html>
