@@ -2,10 +2,12 @@
 <html>
   <head>
     <title>React Socket.IO</title>
-    <script src="/socket.io/socket.io.js"></script>
+    <!-- script src="/socket.io/socket.io.js"></script -->
+    <script src="https://cdn.socket.io/socket.io-1.3.2.js"></script>
     <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
     <script src="http://fb.me/react-0.12.2.js"></script>
     <script src="http://fb.me/JSXTransformer-0.12.2.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1.7.min.js"></script>
   </head>
   <body>
     <h1>Gallery</h1>
@@ -13,10 +15,21 @@
     <ul id="photos"></ul>
   </body>
   <script type="text/jsx">
+
+    AWS.config.logger = console;
+    AWS.config.region = 'us-east-1';
+    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+      AccountId: '191277362675',
+      IdentityPoolId: 'us-east-1:28a77858-b74b-493a-ac8a-fddcb58fb5dd',
+      RoleArn: 'arn:aws:iam::191277362675:role/Cognito_kameradevUnauth_DefaultRole'
+    });
+     
+    var s3 = new AWS.S3();
+   
     var GalleryList = React.createClass({
       render: function() {
         var createItem = function(imgUrl) {
-          return <li><img height="50px" width="50px" src={imgUrl}/></li>;
+          return <li><img src={imgUrl}/></li>;
         };
         // Warning: Each child in an array should have a unique "key" prop.
         return <ul>{this.props.photos.map(createItem)}</ul>;
@@ -40,9 +53,41 @@
     });
     galleryPhotos = React.render(<GalleryPhotos />, $('#example')[0]);
 
-    var socket = io();
-    socket.on('message name', function(msg){
-      galleryPhotos.addPhoto('http://i.ytimg.com/vi/bZemQdvthBs/maxresdefault.jpg');
+    var socket = io('http://localhost:3000/?device_id=3333333331');
+
+    socket.on('commands', function(msg){
+      console.log(msg);
+      console.log(msg['commands']);
+      console.log(msg['commands'][0]);
+      console.log(msg['commands'][0]['camera_id']);
+
+      var photo_id = msg['commands'][0]['params']['photo_id'];
+      console.log('photo_id: ', photo_id);
+
+      // TODO
+      var key = photo_id + '-thumb.jpeg';
+      console.log('key: ', key);
+      //var key = '004194B1-501D-4CD6-A49D-B210EBE81660-thumb.jpeg';
+      //console.log('key: ', key);
+
+      var photo_s3bucket = msg['commands'][0]['params']['photo_s3bucket'];
+      console.log('photo_s3bucket: ', photo_s3bucket);
+
+      var params = {Bucket: photo_s3bucket, Key: key};
+      s3.getSignedUrl('getObject', params,function (err, url) {
+        if(err) {
+          console.log('The err is', err);
+        } else {
+          console.log('URL is ',url);
+          // TODO can't do this until the image is available
+          setTimeout(
+            function() 
+              {
+                galleryPhotos.addPhoto(url);
+              //do something special
+              }, 1500);
+        }
+      });
     });
 
   </script>
